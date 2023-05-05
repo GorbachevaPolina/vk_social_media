@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const User = require('../models/User.js');
 const bcrypt = require("bcrypt");
+const jwtGenerator = require('../utils/jwtGenerator.js')
 
 //register
 router.post("/register", async (req, res) => {
@@ -16,7 +17,10 @@ router.post("/register", async (req, res) => {
             university: req.body.university
         })
         const user = await newUser.save()
-        res.status(200).json(user)
+
+        const token = jwtGenerator(user.id);
+        res.status(200).json({token})
+        // res.status(200).json(user)
     } catch (error) {
         res.status(500).json(error)
     }
@@ -33,7 +37,9 @@ router.post("/login", async (req, res) => {
         if(!validPassword) {
             res.status(400).send("Wrong password")
         }
-        res.status(200).json(user)
+
+        const token = jwtGenerator(user.id)
+        res.status(200).json({token})
     } catch (error) {
         res.status(500).json(error)
     }
