@@ -17,7 +17,18 @@ const authorization = require("../middleware/authorization.js")
 //     }
 // })
 
-//get user
+//get yourself
+router.get("/", authorization, async (req, res) => {
+    try {
+        const user = await User.findById(req.user);
+        const { password, updatedAt, createdAt, email, __v, ...others} = user._doc;
+        res.status(200).json(others)
+    } catch (error) {
+        res.status(500).json(error)
+    }
+})
+
+//get other user
 router.get("/:id", authorization, async (req, res) => {
     try {
         const user = await User.findById(req.params.id);

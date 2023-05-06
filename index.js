@@ -3,6 +3,7 @@ const app = express();
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
+const cors = require("cors");
 const morgan = require("morgan");
 const userRoute = require('./routes/users.js')
 const authRoute = require('./routes/auth.js')
@@ -23,6 +24,7 @@ connectToMongo();
 
 //middleware
 app.use(express.json());
+app.use(cors());
 app.use(helmet());
 app.use(morgan("common"));
 

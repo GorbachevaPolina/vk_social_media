@@ -19,7 +19,16 @@ router.post("/register", async (req, res) => {
         const user = await newUser.save()
 
         const token = jwtGenerator(user.id);
-        res.status(200).json({token})
+        const info = {
+            username: user.username,
+            city: user.city,
+            age: user.age,
+            university: user.university,
+            profilePicture: user.profilePicture,
+            friends: user.friends,
+            friends_req: user.friends_req
+        }
+        res.status(200).json({token, info});
         // res.status(200).json(user)
     } catch (error) {
         res.status(500).json(error)
@@ -39,7 +48,16 @@ router.post("/login", async (req, res) => {
         }
 
         const token = jwtGenerator(user.id)
-        res.status(200).json({token})
+        const info = {
+            username: user.username,
+            city: user.city,
+            age: user.age,
+            university: user.university,
+            profilePicture: user.profilePicture,
+            friends: user.friends,
+            friends_req: user.friends_req
+        }
+        res.status(200).json({token, info})
     } catch (error) {
         res.status(500).json(error)
     }
