@@ -1,9 +1,10 @@
 const router = require("express").Router();
 const Post = require("../models/Post.js")
 const User = require("../models/User.js")
+const authorization = require("../middleware/authorization.js")
 
 //create a post
-router.post("/", async (req, res) => {
+router.post("/", authorization, async (req, res) => {
     try {
         const newPost = new Post(req.body);
         const savedPost = await newPost.save();
@@ -14,14 +15,14 @@ router.post("/", async (req, res) => {
 })
 
 //like and unlike a post
-router.put("/:id/like", async (req, res) => {
+router.put("/:id/like", authorization, async (req, res) => {
     try {
         const post = await Post.findById(req.params.id);
-        if(!post.likes.includes(req.body.userId)) {
-            await post.updateOne({ $push: { likes: req.body.userId } });
+        if(!post.likes.includes(req.user)) {
+            await post.updateOne({ $push: { likes: req.user } });
             res.status(200).json("The post has been liked")
         } else {
-            await post.updateOne({ $pull: { likes: req.body.userId } });
+            await post.updateOne({ $pull: { likes: req.user } });
             res.status(200).json("The post has been unliked")
         }
     } catch (error) {
@@ -30,9 +31,9 @@ router.put("/:id/like", async (req, res) => {
 })
 
 //get user posts
-router.get("/:id", async (req, res) => {
+router.get("/personal-posts", authorization, async (req, res) => {
     try {
-        const userPosts = await Post.find({ userId: req.params.id });
+        const userPosts = await Post.find({ userId: req.user });
         res.status(200).json(userPosts)
     } catch (error) {
         res.status(500).json(error)
@@ -40,9 +41,9 @@ router.get("/:id", async (req, res) => {
 })
 
 //get all friend posts
-router.get("/timeline/all", async (req, res) => {
+router.get("/timeline", authorization, async (req, res) => {
     try {
-        const currentUser = await User.findById(req.body.userId);
+        const currentUser = await User.findById(req.user);
         // const userPosts = await Post.find({ userId: currentUser.id });
         const friendPosts = await Promise.all(
             currentUser.friends.map(friendId => {
