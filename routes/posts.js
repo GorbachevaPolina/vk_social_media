@@ -1,12 +1,28 @@
 const router = require("express").Router();
+const multer = require('multer');
+const path = require('path');
 const Post = require("../models/Post.js")
 const User = require("../models/User.js")
 const authorization = require("../middleware/authorization.js")
 
+const storage = multer.diskStorage({
+    destination: function(req, file, cb) {
+        cb(null, './uploads/');
+    },
+    filename: function(req, file, cb) {
+        cb(null, Date.now() + file.originalname)
+    }
+})
+const upload = multer({storage: storage})
+
 //create a post
-router.post("/", authorization, async (req, res) => {
+router.post("/", authorization, upload.single('image'), async (req, res) => {
     try {
-        const newPost = new Post(req.body);
+        const newPost = new Post({
+            userId: req.user, 
+            image: req.file.path,
+            ...req.body
+        });
         const savedPost = await newPost.save();
         res.status(200).json(savedPost)
     } catch (error) {
