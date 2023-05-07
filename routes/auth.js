@@ -1,10 +1,21 @@
 const router = require("express").Router();
+const multer = require('multer');
 const User = require('../models/User.js');
 const bcrypt = require("bcrypt");
 const jwtGenerator = require('../utils/jwtGenerator.js')
 
+const storage = multer.diskStorage({
+    destination: function(req, file, cb) {
+        cb(null, './uploads/');
+    },
+    filename: function(req, file, cb) {
+        cb(null, Date.now() + file.originalname)
+    }
+})
+const upload = multer({storage: storage})
+
 //register
-router.post("/register", async (req, res) => {
+router.post("/register", upload.single("image"), async (req, res) => {
     try {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(req.body.password, salt)
@@ -14,7 +25,8 @@ router.post("/register", async (req, res) => {
             password: hashedPassword,
             city: req.body.city,
             age: req.body.age,
-            university: req.body.university
+            university: req.body.university,
+            profilePicture: req.file ? req.file.path : ""
         })
         const user = await newUser.save()
 

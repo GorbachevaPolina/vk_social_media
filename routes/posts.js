@@ -20,7 +20,7 @@ router.post("/", authorization, upload.single('image'), async (req, res) => {
     try {
         const newPost = new Post({
             userId: req.user, 
-            image: req.file.path,
+            image: req.file ? req.file.path : "",
             ...req.body
         });
         const savedPost = await newPost.save();
@@ -36,11 +36,12 @@ router.put("/:id/like", authorization, async (req, res) => {
         const post = await Post.findById(req.params.id);
         if(!post.likes.includes(req.user)) {
             await post.updateOne({ $push: { likes: req.user } });
-            res.status(200).json("The post has been liked")
+            // res.status(200).json("The post has been liked")
         } else {
             await post.updateOne({ $pull: { likes: req.user } });
-            res.status(200).json("The post has been unliked")
+            // res.status(200).json("The post has been unliked")
         }
+        res.status(200).json(req.user)
     } catch (error) {
         res.status(500).json(error)
     }
