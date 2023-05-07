@@ -80,5 +80,24 @@ router.put("/:id/delete-friend", authorization, async (req, res) => {
         res.status(403).json("You can't unfriend yourself")
     }
 })
+
+//get all friends
+router.get("/friends/all", authorization, async (req, res) => {
+    try {
+        const user = await User.findById(req.user);
+        const friends = await Promise.all(
+            user.friends.map(friendId => {
+                return User.findById(friendId)
+            })
+        );
+        res.status(200).json(friends.map(item => {return {
+            _id: item._id,
+            username: item.username,
+            profilePicture: item.profilePicture
+        }}))
+    } catch (error) {
+        res.status(500).json(error)
+    }
+})
  
 module.exports = router;
