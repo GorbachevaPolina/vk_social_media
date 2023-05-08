@@ -48,18 +48,65 @@ router.get("/:id", authorization, async (req, res) => {
     }
 })
 
-//add user to friends
-router.put("/:id/add-friend", authorization, async (req, res) => {
+//send friend request to user
+router.put("/:id/send-friend-request", authorization, async (req, res) => {
     if(req.params.id !== req.user) {
         try {
-            const user = await User.findById(req.user);
-            const currentUser = await User.findById(req.params.id);
-            if(!user.friends.includes(req.params.id)) {
-                await user.updateOne({$push: {friends: req.params.id}})
-                await currentUser.updateOne({$push: {friends: req.user}});
-                res.status(200).json("user has been added to friends list")
+            const currentUser = await User.findById(req.user);
+            const user = await User.findById(req.params.id);
+            if(!user.friends.includes(req.user) && !user.friends_req.includes(req.user)) {
+                // await user.updateOne({$push: {friends: req.params.id}})
+                // await currentUser.updateOne({$push: {friends: req.user}});
+                // res.status(200).json("user has been added to friends list")
+                await currentUser.updateOne({$push: {friends_pending: req.params.id}})
+                await user.updateOne({$push: {friends_req: req.user}})
+                res.status(200).json("The friend request has been sent")
             } else {
                 res.status(403).json("You are already friends")
+            }
+        } catch (error) {
+            res.status(500).json(error)
+        }
+    } else {
+        res.status(403).json("You can't friend yourself")
+    }
+})
+
+//accept friend request
+router.put("/:id/accept-friend-request", authorization, async (req, res) => {
+    if(req.params.id !== req.user) {
+        try {
+            const currentUser = await User.findById(req.user);
+            const user = await User.findById(req.params.id);
+            if (user.friends_pending.includes(req.user) && currentUser.friends_req.includes(req.params.id)) {
+                await currentUser.updateOne({$pull: {friends_req: req.params.id}})
+                await currentUser.updateOne({$push: {friends: req.params.id}})
+                await user.updateOne({$pull: {friends_pending: req.user}})
+                await user.updateOne({$push: {friends: req.user}})
+                res.status(200).json("The user has been added to friends")
+            } else {
+                res.status(403).json("Send friend request first")
+            }
+        } catch (error) {
+            res.status(500).json(error)
+        }
+    } else {
+        res.status(403).json("You can't friend yourself")
+    }
+})
+
+//cancel sent friend request
+router.put("/:id/cancel-friend-request", authorization, async (req, res) => {
+    if(req.params.id !== req.user) {
+        try {
+            const currentUser = await User.findById(req.user);
+            const user = await User.findById(req.params.id);
+            if (user.friends_req.includes(req.user) && currentUser.friends_pending.includes(req.params.id)) {
+                await currentUser.updateOne({$pull: {friends_pending: req.params.id}})
+                await user.updateOne({$pull: {friends_req: req.user}})
+                res.status(200).json("The request has been cancelled")
+            } else {
+                res.status(403).json("Send friend request first")
             }
         } catch (error) {
             res.status(500).json(error)
@@ -104,6 +151,73 @@ router.get("/friends/all", authorization, async (req, res) => {
             username: item.username,
             profilePicture: item.profilePicture
         }}))
+    } catch (error) {
+        res.status(500).json(error)
+    }
+})
+
+//get all people
+router.get("/people/all", authorization, async (req, res) => {
+    try {
+        const user = await User.findById(req.user);
+        const requests = await Promise.all(
+            user.friends_req.map(id => {
+                return User.findById(id)
+            })
+        );
+        const pending = await Promise.all(
+            user.friends_pending.map(id => {
+                return User.findById(id)
+            })
+        );
+        const result = {
+            friends_req: requests.map(item => {return {
+                _id: item._id,
+                username: item.username,
+                profilePicture: item.profilePicture
+            }}),
+            friends_pending: pending.map(item => {return {
+                _id: item._id,
+                username: item.username,
+                profilePicture: item.profilePicture
+            }})
+        }
+        res.status(200).json(result)
+    } catch (error) {
+        res.status(500).json(error)
+    }
+})
+
+//search by username
+router.get("/people/search", async (req, res) => {
+    try {
+        const { search } = req.query;
+        if(search) {
+            let users;
+            users = await User.aggregate(
+                [
+                    {
+                        '$search': {
+                            'index': 'username',
+                            'autocomplete': {
+                                'query': search,
+                                'path': 'username'
+                            }
+                        }
+                    },
+                    {
+                        '$project': {
+                            '_id': 1,
+                            'profilePicture': 1,
+                            'username': 1
+                        }
+                    }
+                ]
+            )
+            res.status(200).json(users)
+        } else {
+            res.status(200).json([])
+        }
     } catch (error) {
         res.status(500).json(error)
     }
