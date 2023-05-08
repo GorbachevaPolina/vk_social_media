@@ -21,7 +21,16 @@ const authorization = require("../middleware/authorization.js")
 router.get("/", authorization, async (req, res) => {
     try {
         const user = await User.findById(req.user);
-        const { password, updatedAt, createdAt, email, __v, ...others} = user._doc;
+        const { 
+            password, 
+            updatedAt, 
+            createdAt, 
+            email, 
+            __v, 
+            friends,
+            friends_req,
+            friends_pending,
+            ...others} = user._doc;
         res.status(200).json(others)
     } catch (error) {
         res.status(500).json(error)

@@ -36,9 +36,7 @@ router.post("/register", upload.single("image"), async (req, res) => {
             city: user.city,
             age: user.age,
             university: user.university,
-            profilePicture: user.profilePicture,
-            friends: user.friends,
-            friends_req: user.friends_req
+            profilePicture: user.profilePicture
         }
         res.status(200).json({token, info});
         // res.status(200).json(user)
@@ -65,9 +63,7 @@ router.post("/login", async (req, res) => {
             city: user.city,
             age: user.age,
             university: user.university,
-            profilePicture: user.profilePicture,
-            friends: user.friends,
-            friends_req: user.friends_req
+            profilePicture: user.profilePicture
         }
         res.status(200).json({token, info})
     } catch (error) {

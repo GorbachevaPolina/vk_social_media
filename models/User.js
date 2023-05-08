@@ -31,6 +31,10 @@ const UserSchema = new mongoose.Schema({
         type: Array,
         default: []
     },
+    friends_pending: {
+        type: Array,
+        default: []
+    },
     age: {
         type: String,
         default: ""
