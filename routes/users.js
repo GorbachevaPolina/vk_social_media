@@ -1,21 +1,7 @@
 const router = require("express").Router();
 const User = require("../models/User.js")
-const authorization = require("../middleware/authorization.js")
-
-//update user
-// router.put("/:id", async (req, res) => {
-//     if(req.body.userId === req.params.id) {
-//         if(req.body.password) {
-//             try {
-                
-//             } catch (error) {
-                
-//             }
-//         }
-//     } else {
-//         return res.status(403).json("You can only update you account")
-//     }
-// })
+const authorization = require("../middleware/authorization.js");
+const Post = require("../models/Post.js");
 
 //get yourself
 router.get("/", authorization, async (req, res) => {
@@ -41,8 +27,18 @@ router.get("/", authorization, async (req, res) => {
 router.get("/:id", authorization, async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
-        const { password, updatedAt, email, friends_req, ...others } = user._doc;
-        res.status(200).json(others)
+        const { 
+            password, 
+            updatedAt, 
+            createdAt,
+            email, 
+            friends_req, 
+            friends,
+            friends_pending,
+            __v,
+            ...others } = user._doc;
+        const posts = await Post.find({ userId: req.params.id })
+        res.status(200).json({user: others, posts: posts})
     } catch (error) {
         res.status(500).json(error)
     }
@@ -55,9 +51,6 @@ router.put("/:id/send-friend-request", authorization, async (req, res) => {
             const currentUser = await User.findById(req.user);
             const user = await User.findById(req.params.id);
             if(!user.friends.includes(req.user) && !user.friends_req.includes(req.user)) {
-                // await user.updateOne({$push: {friends: req.params.id}})
-                // await currentUser.updateOne({$push: {friends: req.user}});
-                // res.status(200).json("user has been added to friends list")
                 await currentUser.updateOne({$push: {friends_pending: req.params.id}})
                 await user.updateOne({$push: {friends_req: req.user}})
                 res.status(200).json("The friend request has been sent")
@@ -160,6 +153,11 @@ router.get("/friends/all", authorization, async (req, res) => {
 router.get("/people/all", authorization, async (req, res) => {
     try {
         const user = await User.findById(req.user);
+        const friends = await Promise.all(
+            user.friends.map(id => {
+                return User.findById(id)
+            })
+        );
         const requests = await Promise.all(
             user.friends_req.map(id => {
                 return User.findById(id)
@@ -171,6 +169,11 @@ router.get("/people/all", authorization, async (req, res) => {
             })
         );
         const result = {
+            friends: friends.map(item => {return {
+                _id: item._id,
+                username: item.username,
+                profilePicture: item.profilePicture
+            }}),
             friends_req: requests.map(item => {return {
                 _id: item._id,
                 username: item.username,

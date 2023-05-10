@@ -32,6 +32,7 @@ router.post("/register", upload.single("image"), async (req, res) => {
 
         const token = jwtGenerator(user.id);
         const info = {
+            _id: user._id,
             username: user.username,
             city: user.city,
             age: user.age,
@@ -39,7 +40,6 @@ router.post("/register", upload.single("image"), async (req, res) => {
             profilePicture: user.profilePicture
         }
         res.status(200).json({token, info});
-        // res.status(200).json(user)
     } catch (error) {
         res.status(500).json(error)
     }
@@ -59,6 +59,7 @@ router.post("/login", async (req, res) => {
 
         const token = jwtGenerator(user.id)
         const info = {
+            _id: user._id,
             username: user.username,
             city: user.city,
             age: user.age,
