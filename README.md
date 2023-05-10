@@ -1,3 +1,9 @@
-# vk_social_media
+# API for SocialCircle
 
-Test task for VK summer internship
+## Description
+Server for social media made for VK summer internship.
+
+## Technologies
+* Node
+* Express
+* MongoDB
