@@ -24,7 +24,7 @@ connectToMongo();
 
 //middleware
 app.use(express.json());
-app.use('/tmp/uploads', express.static('uploads'))
+app.use('/uploads', express.static('uploads'))
 app.use(cors());
 app.use(helmet({
     crossOriginResourcePolicy: false,
